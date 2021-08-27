@@ -2,3 +2,21 @@
 
 GET {{endpoint}}/hello
 ###
+
+GET {{endpoint}}/spaces
+###
+
+GET {{endpoint}}/spaces?SpaceID=fad20a55-40c5-460a-8234-80a07d3101e5
+###
+
+GET {{endpoint}}/spaces?location=Iowa City
+###
+
+POST {{endpoint}}/spaces/
+Content-Type: application/json
+
+{
+    "location": "Dubuque",
+    "name": "Mustangs"
+}
+###
