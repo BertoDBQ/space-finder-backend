@@ -1,5 +1,4 @@
 import { S3 } from 'aws-sdk';
-import { v4 } from 'uuid';
 
 const s3Client = new S3();
 

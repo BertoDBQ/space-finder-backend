@@ -1,12 +1,9 @@
 @endpoint = https://nzcctzj3fl.execute-api.us-east-2.amazonaws.com/prod
 
-GET {{endpoint}}/hello
-###
-
 GET {{endpoint}}/spaces
 ###
 
-GET {{endpoint}}/spaces?SpaceID=fad20a55-40c5-460a-8234-80a07d3101e5
+GET {{endpoint}}/spaces?SpaceID=f74617ca-954e-49ec-899f-b8f6f1946c93
 ###
 
 GET {{endpoint}}/spaces?location=Iowa City
@@ -16,7 +13,20 @@ POST {{endpoint}}/spaces/
 Content-Type: application/json
 
 {
-    "location": "Dubuque",
-    "name": "Mustangs"
+    "location": "Monticello",
+    "name": "Panthers"
 }
+###
+
+PUT {{endpoint}}/spaces/?SpaceID=2a6206ed-8550-4c16-9d70-6802e192d3c1
+Content-Type: application/json
+
+{
+    "location": "Las Vegas",
+    "name": "Raiders"
+}
+###
+
+DELETE {{endpoint}}/spaces/?SpaceID=2a6206ed-8550-4c16-9d70-6802e192d3c1
+Content-Type: application/json
 ###
