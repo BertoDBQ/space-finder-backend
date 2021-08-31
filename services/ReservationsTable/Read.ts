@@ -5,12 +5,10 @@ import {
   APIGatewayProxyResult,
   Context,
 } from 'aws-lambda';
-import { RestApi } from 'aws-cdk-lib/lib/aws-apigateway';
-import { addCorsHeader } from '../Shared/Utils';
+import { addCorsHeader, isIncludedInGroup } from '../Shared/Utils';
 
 const TABLE_NAME = process.env.TABLE_NAME;
 const PRIMARY_KEY = process.env.PRIMARY_KEY;
-
 const dbClient = new DynamoDB.DocumentClient();
 
 async function handler(
@@ -19,11 +17,9 @@ async function handler(
 ): Promise<APIGatewayProxyResult> {
   const result: APIGatewayProxyResult = {
     statusCode: 200,
-    body: 'Hello from DynamoDB',
+    body: 'Hello from DYnamoDb',
   };
-
   addCorsHeader(result);
-
   try {
     if (event.queryStringParameters) {
       if (PRIMARY_KEY! in event.queryStringParameters) {
@@ -36,54 +32,25 @@ async function handler(
         );
       }
     } else {
-      result.body = await scanTable();
+      if (isIncludedInGroup('admins', event)) {
+        result.body = await scanTable();
+      } else {
+        result.body = JSON.stringify('Not authorized!');
+        result.statusCode = 403;
+      }
     }
   } catch (error) {
+    result.statusCode = 500;
     result.body = error.message;
   }
-
   return result;
 }
 
-async function scanTable() {
-  // rja - is the .promise needed ???
-  const queryResponse = await dbClient
-    .scan({
-      TableName: TABLE_NAME!,
-    })
-    .promise();
-
-  return JSON.stringify(queryResponse.Items);
-}
-
-async function queryWithPrimaryPartition(
-  queryParms: APIGatewayProxyEventQueryStringParameters
-) {
-  // rja - is the .promise needed ???
-  const keyValue = queryParms[PRIMARY_KEY!];
-  const queryResponse = await dbClient
-    .query({
-      TableName: TABLE_NAME!,
-      KeyConditionExpression: '#zz = :zzzz',
-      ExpressionAttributeNames: {
-        '#zz': PRIMARY_KEY!,
-      },
-      ExpressionAttributeValues: {
-        ':zzzz': keyValue,
-      },
-    })
-    .promise();
-
-  return JSON.stringify(queryResponse.Items);
-}
-
 async function queryWithSecondaryPartition(
-  queryParms: APIGatewayProxyEventQueryStringParameters
+  queryParams: APIGatewayProxyEventQueryStringParameters
 ) {
-  const queryKey = Object.keys(queryParms)[0];
-  const queryValue = queryParms[queryKey];
-
-  // rja - is the .promise needed ???
+  const queryKey = Object.keys(queryParams)[0];
+  const queryValue = queryParams[queryKey];
   const queryResponse = await dbClient
     .query({
       TableName: TABLE_NAME!,
@@ -97,7 +64,34 @@ async function queryWithSecondaryPartition(
       },
     })
     .promise();
+  return JSON.stringify(queryResponse.Items);
+}
 
+async function queryWithPrimaryPartition(
+  queryParams: APIGatewayProxyEventQueryStringParameters
+) {
+  const keyValue = queryParams[PRIMARY_KEY!];
+  const queryResponse = await dbClient
+    .query({
+      TableName: TABLE_NAME!,
+      KeyConditionExpression: '#zz = :zzzz',
+      ExpressionAttributeNames: {
+        '#zz': PRIMARY_KEY!,
+      },
+      ExpressionAttributeValues: {
+        ':zzzz': keyValue,
+      },
+    })
+    .promise();
+  return JSON.stringify(queryResponse.Items);
+}
+
+async function scanTable() {
+  const queryResponse = await dbClient
+    .scan({
+      TableName: TABLE_NAME!,
+    })
+    .promise();
   return JSON.stringify(queryResponse.Items);
 }
 

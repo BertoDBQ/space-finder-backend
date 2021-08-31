@@ -5,7 +5,7 @@ import {
   Context,
 } from 'aws-lambda';
 
-import { getEventBody } from '../Shared/Utils';
+import { addCorsHeader, getEventBody } from '../Shared/Utils';
 
 const TABLE_NAME = process.env.TABLE_NAME as string;
 const PRIMARY_KEY = process.env.PRIMARY_KEY as string;
@@ -19,6 +19,8 @@ async function handler(
     statusCode: 200,
     body: 'Hello from DynamoDB',
   };
+
+  addCorsHeader(result);
 
   const requestBody = getEventBody(event);
   const spaceId = event.queryStringParameters?.[PRIMARY_KEY];

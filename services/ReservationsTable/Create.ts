@@ -4,10 +4,9 @@ import {
   APIGatewayProxyResult,
   Context,
 } from 'aws-lambda';
-
 import {
   MissingFieldError,
-  validateAsSpaceEntry,
+  validateAsReservationEntry,
 } from '../Shared/InputValidator';
 import { generateRandomId, getEventBody, addCorsHeader } from '../Shared/Utils';
 
@@ -20,15 +19,14 @@ async function handler(
 ): Promise<APIGatewayProxyResult> {
   const result: APIGatewayProxyResult = {
     statusCode: 200,
-    body: 'Hello from DynamoDB',
+    body: 'Hello from DYnamoDb',
   };
-
   addCorsHeader(result);
-
   try {
     const item = getEventBody(event);
-    item.SpaceID = generateRandomId();
-    validateAsSpaceEntry(item);
+    item.state = 'PENDING';
+    item.reservationId = generateRandomId();
+    validateAsReservationEntry(item);
     await dbClient
       .put({
         TableName: TABLE_NAME!,
@@ -36,13 +34,16 @@ async function handler(
       })
       .promise();
     result.body = JSON.stringify({
-      id: item.spaceId,
+      id: item.reservationId,
     });
   } catch (error) {
-    result.statusCode = error instanceof MissingFieldError ? 403 : 500;
-    result.body = error.message;
+    if (error instanceof MissingFieldError) {
+      result.statusCode = 400;
+    } else {
+      result.statusCode = 500;
+    }
+    result.body = JSON.stringify(error.message);
   }
-
   return result;
 }
 
